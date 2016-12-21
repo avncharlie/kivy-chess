@@ -1,0 +1,31 @@
+<ChessCell@Button>:
+    set_hint: None, None 
+#    on_release: print(self.parent.parent.width, self.parent.parent.height)
+
+<ChessRow@BoxLayout>:
+    set_hint: None, None
+    ChessCell:
+    ChessCell:
+    ChessCell:
+    ChessCell:
+    ChessCell:
+    ChessCell:
+    ChessCell:
+    ChessCell:
+
+<Chessboard>:
+    rows: 8
+    ChessRow:
+    ChessRow:
+    ChessRow:
+    ChessRow:
+    ChessRow:
+    ChessRow:
+    ChessRow:
+    ChessRow:
+
+<ChessboardCentered>:
+    Chessboard:
+
+<ChessGame>:
+    ChessboardCentered:
