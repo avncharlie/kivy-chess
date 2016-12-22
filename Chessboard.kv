@@ -1,5 +1,15 @@
 <ChessCell>:
+    set_hint: None, None
     on_release: print(self.id)
+    Image:
+        set_hint: None, None
+        allow_stretch: True
+        keep_ratio: False
+        source: 'BlackQueen.png'
+        y: self.parent.y - (self.parent.height - self.height)/2
+        x: self.parent.x
+        height: self.parent.height 
+        width: self.parent.width
 
 <ChessGame>:
     ChessboardCentered:
