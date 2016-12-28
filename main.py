@@ -6,6 +6,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.button import Button 
 
 from kivy.properties import NumericProperty
+from kivy.clock import Clock
 
 import chess
 import chess.uci
@@ -41,7 +42,7 @@ class Chessboard(GridLayout):
         ids = {child.id: child for child in self.children}
 
         # Get the board positions from the fen
-        b = str(board.fen).split(' ')[4].replace('/', '')[7:]
+        b = str(board.fen).split()[4].replace('/', '')[7:]
         # Replace empty spaces with dots
         for num in range(1, 10):
             b = b.replace(str(num), '.'*num)
@@ -145,32 +146,49 @@ class ChessGame(BoxLayout):
         self.selected_square = id
 
     def move_piece(self, id, *args):
-       legal_move_dict = self.create_legal_move_dict()
-       legal_ids = []
-       try:
-           for san in legal_move_dict[\
-               self.id_to_san(self.selected_square)]:
-               legal_ids.append(self.san_to_id(san))
-       except KeyError:
-           pass
+        legal_move_dict = self.create_legal_move_dict()
+        legal_ids = []
+        try:
+            for san in legal_move_dict[\
+                self.id_to_san(self.selected_square)]:
+                legal_ids.append(self.san_to_id(san))
+        except KeyError:
+            pass
 
-       if int(id) in legal_ids:
-           original_square = self.id_to_san(self.selected_square)
-           current_square = self.id_to_san(id)
-           move = chess.Move.from_uci(original_square + current_square)
+        
+        if int(id) in legal_ids:
+            original_square = self.id_to_san(self.selected_square)
+            current_square = self.id_to_san(id)
+            move = chess.Move.from_uci(original_square + current_square)
 
-           board.push(move)
-           self.update_board()
-           self.selected_square = None
+            board.push(move)
+            self.update_board()
+            self.selected_square = None
+            Clock.schedule_once(self.engine_move)
 
-       else:
-           self.select_piece(id)
+        else:
+            self.update_board()
+            self.select_piece(id)
+
+    def engine_move(self, *args):
+        engine.isready()
+        engine.position(board)
+        engine_move = engine.go(movetime=500)[0]
+        board.push(engine_move)
+        self.update_board()
+
+    def turn(self, *args):
+        return str(board.fen).split()[5]
  
     def chesscell_clicked(self, id, *args):
-        if self.selected_square == None:
-            self.select_piece(id)
-        else:
-            self.move_piece(id)
+        if self.turn() == 'w':
+
+            if id == self.selected_square:
+                self.update_board()
+            elif self.selected_square == None:
+                self.select_piece(id)
+            else:
+                self.move_piece(id)
 
 class ChessboardApp(App):
     def build(self):
