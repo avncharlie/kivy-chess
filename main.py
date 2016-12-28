@@ -84,6 +84,7 @@ class ChessCell(Button):
 
 class ChessGame(BoxLayout):
     selected_square = None
+
     def id_to_square(self, id, *args):
         id = int(id)
         row = abs(id//8 - 8)
@@ -126,7 +127,7 @@ class ChessGame(BoxLayout):
             button = ChessCell(id=str(num))
             c_board.add_widget(button)
 
-    def update_board(self, board, *args):
+    def update_board(self, *args):
         self.ids.board.update_positions(board)
 
     def select_piece(self, id, *args):
@@ -157,9 +158,11 @@ class ChessGame(BoxLayout):
            original_square = self.id_to_san(self.selected_square)
            current_square = self.id_to_san(id)
            move = chess.Move.from_uci(original_square + current_square)
+
            board.push(move)
-           self.update_board(board)
+           self.update_board()
            self.selected_square = None
+
        else:
            self.select_piece(id)
  
@@ -168,15 +171,12 @@ class ChessGame(BoxLayout):
             self.select_piece(id)
         else:
             self.move_piece(id)
-                        
 
 class ChessboardApp(App):
     def build(self):
-
         game = ChessGame()
         game.draw_board()
         game.update_board(board)
-        
         return game
 
 if __name__ == '__main__':
