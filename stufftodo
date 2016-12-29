@@ -1,10 +1,10 @@
 stuff to do
 
-add engine move
+DONE add engine move
+add widgets like sidebar moves, undo move, move hint, who's turn, etc
 add title screen
 add 2 player
 add end of game detection
-add widgets like sidebar moves, undo move, move hint, who's turn, etc
 add settings, for now just engine difficulty
 add multiplayer over google realtime api
 add canvas behind buttons to animate peices moving
