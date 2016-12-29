@@ -11,8 +11,10 @@ from kivy.clock import Clock
 import chess
 import chess.uci
 
+from functools import partial
 import os
 import string
+
 
 board = chess.Board()
 engine = chess.uci.popen_engine("stockfish")
@@ -35,7 +37,7 @@ class Chessboard(GridLayout):
                 'K': image_dir + 'WhiteKing.png',
             }
         return d
-        
+ 
     def update_positions(self, *args):
         # Can't call ids directly for some reason so ...
         # Dictionary mapping ids to children (Chess cells)
@@ -73,6 +75,36 @@ class Chessboard(GridLayout):
 
         self.row_default_height = board_dimensions/self.rows
         self.col_default_width = board_dimensions/self.columns
+
+    def button_down(self, id, *args):
+        ids = {child.id: child for child in self.children}
+
+        background_down = 'atlas://data/images/defaulttheme/button_pressed'
+        ids[id].background_normal =  background_down
+
+    def button_up(self, id, *args):
+        ids = {child.id: child for child in self.children}
+
+        background_normal = 'atlas://data/images/defaulttheme/button'
+        ids[id].background_normal =  background_normal
+        
+    def press_button(self, id, *args, is_engine_move=False, engine_move=''):
+        id = str(id)
+        self.button_down(id)
+
+        if is_engine_move == False:
+            Clock.schedule_once(partial(self.button_up, id), .7)
+        else:
+            Clock.schedule_once(partial(self.button_up, id), .3)
+            board.push(engine_move)
+            Clock.schedule_once(self.update_positions)
+
+    def engine_move(self, move, *args):
+        ids = {child.id: child for child in self.children}
+        starter_pos = move[0] 
+        current_pos = move[1]
+
+        self.press_button(starter_pos)
 
 class ChessboardCentered(BoxLayout):
     def on_size(self, *args):
@@ -154,7 +186,6 @@ class ChessGame(BoxLayout):
                 legal_ids.append(self.san_to_id(san))
         except KeyError:
             pass
-
         
         if int(id) in legal_ids:
             original_square = self.id_to_san(self.selected_square)
@@ -164,18 +195,26 @@ class ChessGame(BoxLayout):
             board.push(move)
             self.update_board()
             self.selected_square = None
-            Clock.schedule_once(self.engine_move)
+            Clock.schedule_once(self.engine_move, .5)
 
         else:
             self.update_board()
             self.select_piece(id)
 
-    def engine_move(self, *args):
+    def engine_move(self, *args, engine_think_time=500):
         engine.isready()
         engine.position(board)
-        engine_move = engine.go(movetime=500)[0]
-        board.push(engine_move)
-        self.update_board()
+        engine_move = engine.go(movetime=engine_think_time)[0]
+        str_move = str(engine_move)
+        move = [self.san_to_id(x) for x in [str_move[:2], str_move[2:]]]
+
+        self.ids.board.press_button(move[0])
+        self.select_piece(move[0])
+        Clock.schedule_once(partial(self.ids.board.press_button,
+            move[1], is_engine_move=True, engine_move=engine_move), 1)
+
+    def setup_engine(self, *args):
+        engine.uci()
 
     def turn(self, *args):
         return str(board.fen).split()[5]
@@ -195,6 +234,7 @@ class ChessboardApp(App):
         game = ChessGame()
         game.draw_board()
         game.update_board(board)
+        game.setup_engine()
         return game
 
 if __name__ == '__main__':
