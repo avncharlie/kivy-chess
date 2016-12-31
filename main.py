@@ -23,8 +23,13 @@ import string
 board = chess.Board()
 engine = chess.uci.popen_engine("stockfish")
 
+data_dir = 'data/'
+image_dir = data_dir + 'images/'
+cp_images = image_dir + 'chess-pieces/'
+other_images = image_dir + 'other/'
+
 class Chessboard(GridLayout):
-    def gen_image_dict(self, *args, image_dir='cp-images'):
+    def gen_image_dict(self, *args, image_dir=cp_images):
         if image_dir[-1] != '/':
             image_dir += '/'
         d = {'p': image_dir + 'BlackPawn.png',
@@ -61,13 +66,13 @@ class Chessboard(GridLayout):
             if x[1] != '.':
                 image = image_dict[x[1]]
             else:
-                image = 'cp-images/transparency.png'
+                image = other_images + 'transparency.png'
             ids[str(x[0])].children[0].source = image
             
     def highlight_chesscell(self, id_list, *args):
         self.update_positions()
         ids = {child.id: child for child in self.children}
-        highlight_image = 'cp-images/highlight.png'
+        highlight_image = other_images + 'highlight.png'
         for id in id_list:
             ids[str(id)].children[0].source = highlight_image
           
