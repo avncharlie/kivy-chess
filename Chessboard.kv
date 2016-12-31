@@ -10,6 +10,47 @@
         height: self.parent.height 
         width: self.parent.width
 
+<Sidebar>:
+    orientation: 'vertical'
+    size_hint_x: .5
+
+<ChessClockDisplay>:
+    size_hint_x: .9
+    multiline: False
+    font_name: 'digital-7/digital-7'
+    font_size: 70
+    padding_y: (self.height - self.line_height) / 2
+    padding_x: 20
+    disabled: True
+
+<ChessClockButton>:
+    size_hint_x: 1
+    font_name: 'digital-7/digital-7'
+    font_size: 60
+   
+
+<BlackChessClock>:
+    ChessClockButton:
+        text: 'Black time:'
+    ChessClockDisplay:
+        id: black_display
+        text: self.parent.parent.parent.parent.black_time
+
+<WhiteChessClock>:
+    ChessClockButton:
+        text: 'White time:'
+    ChessClockDisplay:
+        id: white_display
+        text: self.parent.parent.parent.parent.white_time
+        
+
+<ChessClockContainer>:
+    orientation: 'vertical'
+    size_hint: None, None
+    height: self.parent.height/4
+    width: self.parent.width
+    pos_hint: {'top': 1, 'right': 1}
+
 <ChessGame>:
     ChessboardCentered:
         id: board_container
@@ -17,3 +58,8 @@
             id: board
             rows: 8
             columns:8
+
+    Sidebar:
+        ChessClockContainer:
+            WhiteChessClock:
+            BlackChessClock:

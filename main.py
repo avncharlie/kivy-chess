@@ -3,10 +3,14 @@ from kivy.core.window import Window
 
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.button import Button 
+from kivy.uix.textinput import TextInput
 
 from kivy.properties import NumericProperty
 from kivy.clock import Clock
+
+from kivy.properties import StringProperty
 
 import chess
 import chess.uci
@@ -53,7 +57,7 @@ class Chessboard(GridLayout):
         image_dict = self.gen_image_dict()
 
         # Map Chess cell ids to board positions
-        for x in zip(range(64), list(b)):
+        for x in zip(range(64), list(b)): 
             if x[1] != '.':
                 image = image_dict[x[1]]
             else:
@@ -115,8 +119,30 @@ class ChessboardCentered(BoxLayout):
 class ChessCell(Button):
     pass 
 
+class Sidebar(FloatLayout):
+    pass
+
+class ChessClockContainer(BoxLayout):
+    pass
+
+class BlackChessClock(BoxLayout):
+    pass
+
+class ChessClockDisplay(TextInput):
+    pass
+
+class ChessClockButton(Button):
+    pass
+
+class WhiteChessClock(BoxLayout):
+    pass
+
 class ChessGame(BoxLayout):
     selected_square = None
+
+    black_time = StringProperty()
+    white_time = StringProperty()
+    time_interval = 0.5
 
     def id_to_square(self, id, *args):
         id = int(id)
@@ -195,13 +221,21 @@ class ChessGame(BoxLayout):
             board.push(move)
             self.update_board()
             self.selected_square = None
-            Clock.schedule_once(self.engine_move, .5)
+
+            try:
+                self.white_time_counter(cancel=True)
+            except NameError:
+                pass
+
+            Clock.schedule_once(self.engine_move)
 
         else:
             self.update_board()
             self.select_piece(id)
 
-    def engine_move(self, *args, engine_think_time=500):
+    def engine_move(self, *args, engine_think_time=1000):
+        self.black_time_counter(start=True, time=self.black_time)
+
         engine.isready()
         engine.position(board)
         engine_move = engine.go(movetime=engine_think_time)[0]
@@ -212,6 +246,10 @@ class ChessGame(BoxLayout):
         self.select_piece(move[0])
         Clock.schedule_once(partial(self.ids.board.press_button,
             move[1], is_engine_move=True, engine_move=engine_move), 1)
+
+        Clock.schedule_once(partial(self.black_time_counter, cancel=True),1)
+ 
+        self.white_time_counter(start=True, time=self.white_time)
 
     def setup_engine(self, *args):
         engine.uci()
@@ -229,12 +267,43 @@ class ChessGame(BoxLayout):
             else:
                 self.move_piece(id)
 
+    def white_time_counter(self, *args, start=False, time=50, cancel=False):
+        if start:
+            self.white_time = str(time)
+            w_counter = Clock.schedule_interval(self.white_time_counter,
+                self.interval)
+            global w_counter
+        elif cancel:
+            w_counter.cancel()
+        else:
+            self.white_time = str(round(float(self.white_time) \
+                - self.interval, 2))
+
+    def black_time_counter(self, *args, start=False, time=50, cancel=False):
+        if start:
+            self.black_time = str(time)
+            b_counter = Clock.schedule_interval(self.black_time_counter,
+                self.interval)
+            global b_counter
+        elif cancel:
+            b_counter.cancel()
+        else:
+            self.black_time = str(round(float(self.black_time) \
+                - self.interval, 2))
+
+
+    def setup_clocks(self, *args, time=60, interval=0.1):
+        self.black_time = str(time)
+        self.white_time = str(time)
+        self.interval = interval
+
 class ChessboardApp(App):
     def build(self):
         game = ChessGame()
         game.draw_board()
         game.update_board(board)
         game.setup_engine()
+        game.setup_clocks(time=60)
         return game
 
 if __name__ == '__main__':
