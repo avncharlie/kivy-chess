@@ -16,6 +16,7 @@ import chess
 import chess.uci
 
 from functools import partial
+import threading
 import os
 import string
 
@@ -232,18 +233,25 @@ class ChessGame(BoxLayout):
             except NameError:
                 pass
 
-            Clock.schedule_once(self.engine_move)
+            if not self.game_end_check():
+                Clock.schedule_once(self.start_engine_move)
 
         else:
             self.update_board()
             self.select_piece(id)
 
-    def engine_move(self, *args, engine_think_time=1000):
+    def start_engine_move(self, *args):
+        wtime = float(self.white_time) * 1000
+        btime = float(self.black_time) * 1000
+        threading.Thread(target=self.engine_move, \
+            kwargs={'wtime': wtime, 'btime': btime}).start()
+
+    def engine_move(self, *args, wtime=60*100, btime=60*100):
         self.black_time_counter(start=True, time=self.black_time)
 
         engine.isready()
         engine.position(board)
-        engine_move = engine.go(movetime=engine_think_time)[0]
+        engine_move = engine.go(wtime=wtime, btime=btime)[0]
         str_move = str(engine_move)
         move = [self.san_to_id(x) for x in [str_move[:2], str_move[2:]]]
 
@@ -253,8 +261,14 @@ class ChessGame(BoxLayout):
             move[1], is_engine_move=True, engine_move=engine_move), 1)
 
         Clock.schedule_once(partial(self.black_time_counter, cancel=True),1)
+
+
+        Clock.schedule_once(self.game_end_check, 1)
+        
+        Clock.schedule_once(partial(self.white_time_counter, \
+            start=True, \
+            time=self.white_time), 1)
  
-        self.white_time_counter(start=True, time=self.white_time)
 
     def setup_engine(self, *args):
         engine.uci()
@@ -275,9 +289,9 @@ class ChessGame(BoxLayout):
     def white_time_counter(self, *args, start=False, time=50, cancel=False):
         if start:
             self.white_time = str(time)
+            global w_counter
             w_counter = Clock.schedule_interval(self.white_time_counter,
                 self.interval)
-            global w_counter
         elif cancel:
             w_counter.cancel()
         else:
@@ -287,9 +301,9 @@ class ChessGame(BoxLayout):
     def black_time_counter(self, *args, start=False, time=50, cancel=False):
         if start:
             self.black_time = str(time)
+            global b_counter
             b_counter = Clock.schedule_interval(self.black_time_counter,
                 self.interval)
-            global b_counter
         elif cancel:
             b_counter.cancel()
         else:
@@ -302,13 +316,54 @@ class ChessGame(BoxLayout):
         self.white_time = str(time)
         self.interval = interval
 
+    def end_game(self, reason, *args):
+        Clock.schedule_once(partial(self.white_time_counter, cancel=True), 1)
+        Clock.schedule_once(partial(self.black_time_counter, cancel=True), 1)
+
+        print(reason)
+        if 'white' in reason:
+            print('Black won')
+        elif 'black' in reason:
+            print('White won')
+        else:
+            if board.result[-1] == '1':
+                print('Black won')
+            elif board.result[0] == '1':
+                print('White won')
+            else:
+                print('Draw')
+
+    def game_end_check(self, *args):
+        if board.is_game_over():
+            if board.is_checkmate():
+                self.end_game('checkmate')
+            elif board.is_stalemate():
+                self.end_game('stalemate')
+            elif board.is_insufficient_material():
+                self.end_game('insufficient_material')
+            elif board.is_seventy_five_moves():
+                self.end_game('seventy five moves')
+            elif board.is_fivefold_repetition():
+                self.end_game('fivefold_repetition')
+            return True
+
+        elif float(self.white_time) < 0:
+            self.end_game('white ran out of time')
+            return True
+        elif float(self.black_time) < 0:
+            self.end_game('black ran out of time')
+            return True
+
+        return False
+
+
 class ChessboardApp(App):
     def build(self):
         game = ChessGame()
         game.draw_board()
         game.update_board(board)
         game.setup_engine()
-        game.setup_clocks(time=60)
+        game.setup_clocks(time=60, interval=.01)
         return game
 
 if __name__ == '__main__':
