@@ -10,6 +10,8 @@ from kivy.uix.textinput import TextInput
 from kivy.properties import NumericProperty
 from kivy.clock import Clock
 
+from kivy.config import Config
+
 from kivy.properties import StringProperty
 
 import chess
@@ -19,7 +21,6 @@ from functools import partial
 import threading
 import os
 import string
-
 
 board = chess.Board()
 engine = chess.uci.popen_engine("stockfish")
@@ -141,6 +142,9 @@ class ChessClockButton(Button):
     pass
 
 class WhiteChessClock(BoxLayout):
+    pass
+
+class Movebox(BoxLayout):
     pass
 
 class ChessGame(BoxLayout):
@@ -268,7 +272,6 @@ class ChessGame(BoxLayout):
         Clock.schedule_once(partial(self.white_time_counter, \
             start=True, \
             time=self.white_time), 1)
- 
 
     def setup_engine(self, *args):
         engine.uci()
@@ -310,7 +313,6 @@ class ChessGame(BoxLayout):
             self.black_time = str(round(float(self.black_time) \
                 - self.interval, 2))
 
-
     def setup_clocks(self, *args, time=60, interval=0.1):
         self.black_time = str(time)
         self.white_time = str(time)
@@ -326,9 +328,9 @@ class ChessGame(BoxLayout):
         elif 'black' in reason:
             print('White won')
         else:
-            if board.result[-1] == '1':
+            if board.result()[-1] == '1':
                 print('Black won')
-            elif board.result[0] == '1':
+            elif board.result()[0] == '1':
                 print('White won')
             else:
                 print('Draw')
@@ -356,7 +358,6 @@ class ChessGame(BoxLayout):
 
         return False
 
-
 class ChessboardApp(App):
     def build(self):
         game = ChessGame()
@@ -364,6 +365,11 @@ class ChessboardApp(App):
         game.update_board(board)
         game.setup_engine()
         game.setup_clocks(time=60, interval=.01)
+
+        Window.size = (1046, 718)
+
+        Config.set('graphics', 'resizable', '1')
+        Config.write()
         return game
 
 if __name__ == '__main__':

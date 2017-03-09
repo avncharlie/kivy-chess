@@ -12,13 +12,13 @@
 
 <Sidebar>:
     orientation: 'vertical'
-    size_hint_x: .5
+    size_hint_x: .6
 
 <ChessClockDisplay>:
     size_hint_x: .9
     multiline: False
     font_name: 'data/fonts/digital-7/digital-7'
-    font_size: 70
+    font_size: 45
     padding_y: (self.height - self.line_height) / 2
     padding_x: 20
     disabled: True
@@ -26,7 +26,7 @@
 <ChessClockButton>:
     size_hint_x: 1
     font_name: 'data/fonts/digital-7/digital-7'
-    font_size: 60
+    font_size: 40
    
 
 <BlackChessClock>:
@@ -46,10 +46,20 @@
 
 <ChessClockContainer>:
     orientation: 'vertical'
-    size_hint: None, None
+    size_hint: 1, None
     height: self.parent.height/4
-    width: self.parent.width
     pos_hint: {'top': 1, 'right': 1}
+
+<Movebox>:
+    size_hint: 1, None
+    pos_hint: {'right': 1, 'top': .75}
+    height: self.parent.height/3
+    TextInput:
+        disabled: True
+        text: '\t1.\te2-e4\tg8-h6'
+        font_name: 'Arial'
+        font_size: 25
+
 
 <ChessGame>:
     ChessboardCentered:
@@ -63,3 +73,4 @@
         ChessClockContainer:
             WhiteChessClock:
             BlackChessClock:
+        Movebox:
