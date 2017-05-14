@@ -150,6 +150,8 @@ class Movebox(BoxLayout):
 class ChessGame(BoxLayout):
     selected_square = None
 
+    movebox_moves = 'This is a move'
+
     black_time = StringProperty()
     white_time = StringProperty()
     time_interval = 0.5
